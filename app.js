@@ -12,6 +12,10 @@ app.use(bodyParser.json());
 
 app.use(cors());
 
+app.get('/', (req, res, next) => {
+    res.send('API for contact form')
+})
+
 app.get('/api', (req, res, next) => {
   res.send('API status is up');
 })
