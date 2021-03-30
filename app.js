@@ -22,12 +22,12 @@ app.get('/api', (req, res, next) => {
 
 console.log(process.env);
 
-app.post('/api/contact', (req, res, next) => {
+app.post('/api/contact', async (req, res, next) => {
 
     // console.log(req.body);
     console.log(process.env);
 
-    const transporter = nodemailer.createTransport({
+    const transporter =  nodemailer.createTransport({
         service: "hotmail",
         auth: {
             user: "kervdev@outlook.com",
@@ -38,8 +38,8 @@ app.post('/api/contact', (req, res, next) => {
     const options = {
         from: "kervdev@outlook.com",
         to: "kervcodes@gmail.com",
-        subject: req.body.subject,
-        text: "email From: " + req.body.email + " message: " + req.body.message,
+        subject: await req.body.subject,
+        text: "email From: " + await req.body.email + " message: " + await req.body.message,
     };
     
     transporter.sendMail(options, (err, info) => {
