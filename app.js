@@ -22,7 +22,7 @@ app.get('/api', (req, res, next) => {
 
 console.log(process.env);
 
-app.post('/api/contact', async (req, res, next) => {
+app.post('/api/contact', cors(), async (req, res, next) => {
 
     // console.log(req.body);
     console.log(process.env);
