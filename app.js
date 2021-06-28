@@ -2,11 +2,14 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
+const { google } = require("googleapis");
+const OAuth2 = google.auth.OAuth2;
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
 
 const app = express();
+
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
@@ -16,70 +19,78 @@ app.use(bodyParser.urlencoded({
 app.use(cors())
 
 
-app.get('/data', async (req, res, next) => {
+app.get('/data', (req, res) => {
   res.send("test")
 })
 
-app.post("/data", cors(), async (req, res, next) => {
-    let text = req.body;
+app.post("/data", async (req, res) => {
+    let text = await req.body;
 
-    let { name, email, subject, message } = req.body;
+    let { name, email, subject, message } = await req.body;
 
-    console.log("email: ", email);
+    console.log("TEXT: ", text);
+
+    const oauth2Client = new OAuth2(
+      process.env.CLIENT, 
+      process.env.SECRET,
+      "https://developers.google.com/oauthplayground"
+    );
     
-    const transporter = nodemailer.createTransport({
-      service: "imap.gmail.com",
-      port: 993,
+    oauth2Client.setCredentials({
+      refresh_token: process.env.REFRESH_TOKEN
+    });
+    
+    const accessToken = await oauth2Client.getAccessToken()
+    
+    
+    const smtpTransport = nodemailer.createTransport({
+      service: "gmail",
       auth: {
-        user: process.env.EMAIL,
-        pass: process.env.PASS
+           type: "OAuth2",
+           user: "kervcodes@gmail.com", 
+           clientId: process.env.CLIENT,
+           clientSecret: process.env.SECRET,
+           refreshToken: process.env.REFRESH_TOKEN,
+           accessToken: accessToken
+      },
+      tls: {
+        rejectUnauthorized: false
       }
-      });
+    });
 
 
-      const mailOptions = {
-        from: email, 
-        to: process.env.EMAIL, 
-        subject: subject, 
-        html: '<h1>this is a test mail.</h1>'
-      }
+    const mailOptions = {
+      from: "kervcodes@gmail.com",
+      to: "ngachou@gmail.com",
+      subject: subject,
+      generateTextFromHTML: true,
+      html: `<div>
+                <h1> New message from: ${name}</h1>
+                <h2>Email: ${email}</h2>
+                <b>Subject: ${subject}</b>
+                <p>Message: ${message}</p>
+            </div>`
+    };
 
-      // transporter.verify(function(error, success) {
-      //   if (error) {
-      //     console.log(error);
-      //   } else {
-      //     console.log("Server is ready to take our messages");
-      //   }
-      // });
-    
-    transporter.sendMail(mailOptions,  function(err, data){
-        if (err) {
-          console.log(err)
-        } else {
-          console.log("success:", data)
+
+    smtpTransport.sendMail(mailOptions, (err, data) => {
+
+      if(err){
+        res.send({
+        message:err
+        })
+        }else{
+        transport.close();
+        res.send({
+        message:'Email has been sent: check your inbox!'
+        })
         }
-    })
-      
-      
-      
-      
-    //   function(error, info) {
-    //     from: process.env.EMAIL,
-    //     subject: subject,
+    });
 
-    //     html: `<div className="email" style="
-    //     border: 1px solid black;
-    //     padding: 20px;
-    //     font-family: sans-serif;
-    //     line-height: 2;
-    //     font-size: 20px;
-    //     ">
-    //     <h2>Here is your email from ${name}!</h2>
-    //     <p>${message}</p>
-    //     </div>
-    //     `
-    // })
-} )
+
+    
+    
+})
 
 
 
